@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Геймификация Чтения Книг</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,6 +43,10 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
         button:hover {
             background-color: #388E3C; /* Темнее при hover */
@@ -65,6 +70,7 @@
             transition: transform 0.2s ease, background-color 0.2s ease;
             padding: 5px;
             border-radius: 4px;
+            position: relative;
         }
         .checkpoint:hover {
             background-color: #f1f8e9; /* Светло-зеленый при hover */
@@ -83,6 +89,27 @@
         .checkpoint:active {
             transform: scale(1.05);
             background-color: #e8f5e9;
+        }
+        /* Анимация частиц при чек */
+        .particles {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            animation: particle-burst 0.5s ease-out forwards;
+        }
+        @keyframes particle-burst {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
         }
         #bookMenu {
             background: #ffffff;
@@ -119,6 +146,9 @@
             flex: 1; /* Занимает половину */
             padding: 8px;
             text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .delete-btn {
             background: none;
@@ -144,6 +174,10 @@
             cursor: pointer;
             margin-top: 10px;
             transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
         #clearAllBtn:hover {
             background-color: #d32f2f;
@@ -158,6 +192,10 @@
             cursor: pointer;
             margin-bottom: 20px;
             transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
         #backBtn:hover {
             background-color: #1E88E5;
@@ -178,6 +216,22 @@
         #profile p {
             margin: 5px 0;
             color: #388E3C; /* Зеленый для текста профиля */
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .progress-container {
+            background-color: #ddd;
+            border-radius: 4px;
+            height: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background-color: #4CAF50;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
         }
         .hidden {
             display: none;
@@ -201,6 +255,9 @@
             <p id="profileLevel"></p>
             <p id="profileRank"></p>
             <p id="profileExp"></p>
+            <div class="progress-container">
+                <div class="progress-bar" id="expProgress"></div>
+            </div>
             <p id="profilePages"></p>
             <p id="profileBooks"></p>
         </div>
@@ -215,18 +272,18 @@
             <label for="chunk">Размер chunk (n страниц на чекпоинт):</label>
             <input type="number" id="chunk" min="1" required>
             
-            <button type="submit">Добавить книгу</button>
+            <button type="submit"><i class="fas fa-plus"></i> Добавить книгу</button>
         </form>
         
         <div id="bookMenu">
             <h3>Список книг</h3>
             <ul id="bookListMenu"></ul>
-            <button id="clearAllBtn">Очистить все книги</button>
+            <button id="clearAllBtn"><i class="fas fa-trash-alt"></i> Очистить все книги</button>
         </div>
     </div>
     
     <div id="detailView" class="hidden">
-        <button id="backBtn">Вернуться назад</button>
+        <button id="backBtn"><i class="fas fa-arrow-left"></i> Вернуться назад</button>
         <div id="bookDetail"></div>
     </div>
 
@@ -260,13 +317,18 @@
             const level = 1 + Math.floor(exp / 100); // Уровень повышается каждые 100 страниц
             const rankIndex = Math.min(Math.floor((level - 1) / 5), ranks.length - 1);
             const rank = ranks[rankIndex];
+            const progressPercent = (exp % 100) / 100 * 100;
 
-            // Отображаем в профиле
-            document.getElementById('profileLevel').textContent = `Уровень: ${level}`;
-            document.getElementById('profileRank').textContent = `Ранг: ${rank}`;
-            document.getElementById('profileExp').textContent = `Опыт: ${exp} / ${(level) * 100}`;
-            document.getElementById('profilePages').textContent = `Прочитано страниц: ${readPages}`;
-            document.getElementById('profileBooks').textContent = `Завершенных книг: ${completedBooks}`;
+            // Отображаем в профиле с иконками
+            document.getElementById('profileLevel').innerHTML = `<i class="fas fa-star"></i> Уровень: ${level}`;
+            document.getElementById('profileRank').innerHTML = `<i class="fas fa-trophy"></i> Ранг: ${rank}`;
+            document.getElementById('profileExp').innerHTML = `<i class="fas fa-chart-line"></i> Опыт: ${exp} / ${level * 100}`;
+            document.getElementById('profilePages').innerHTML = `<i class="fas fa-file-alt"></i> Прочитано страниц: ${readPages}`;
+            document.getElementById('profileBooks').innerHTML = `<i class="fas fa-book-open"></i> Завершенных книг: ${completedBooks}`;
+
+            // Анимация прогресс-бара
+            const expProgress = document.getElementById('expProgress');
+            expProgress.style.width = `${progressPercent}%`;
         }
 
         function renderBookList() {
@@ -278,7 +340,7 @@
                 
                 const a = document.createElement('a');
                 a.href = '#';
-                a.textContent = book.title;
+                a.innerHTML = `<i class="fas fa-book"></i> ${book.title}`;
                 a.addEventListener('click', (e) => {
                     e.preventDefault();
                     showBookDetail(bookIndex);
@@ -287,7 +349,7 @@
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.classList.add('delete-btn');
-                deleteBtn.textContent = '✕';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
                 deleteBtn.addEventListener('click', () => {
                     if (confirm(`Вы уверены, что хотите удалить книгу "${book.title}"?`)) {
                         books.splice(bookIndex, 1);
@@ -304,6 +366,36 @@
             updateProfile();
         }
 
+        function updateBookProgress(bookIndex) {
+            const book = books[bookIndex];
+            let bookPagesRead = 0;
+            const chunks = Math.ceil(book.pages / book.chunk);
+            for (let i = 0; i < chunks; i++) {
+                if (book.progress[i]) {
+                    bookPagesRead += Math.min(book.chunk, book.pages - i * book.chunk);
+                }
+            }
+            const progressPercent = (bookPagesRead / book.pages) * 100;
+            const progressBar = document.querySelector('.book-detail .progress-bar');
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
+        }
+
+        function createParticles(checkpoint) {
+            const particlesDiv = document.createElement('div');
+            particlesDiv.classList.add('particles');
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.style.setProperty('--dx', `${Math.random() * 20 - 10}px`);
+                particle.style.setProperty('--dy', `${Math.random() * 20 - 10}px`);
+                particlesDiv.appendChild(particle);
+            }
+            checkpoint.appendChild(particlesDiv);
+            setTimeout(() => particlesDiv.remove(), 500);
+        }
+
         function showBookDetail(bookIndex) {
             currentBookIndex = bookIndex;
             const book = books[bookIndex];
@@ -316,6 +408,14 @@
             const title = document.createElement('h2');
             title.textContent = `${book.title} (${book.pages} страниц)`;
             bookDiv.appendChild(title);
+
+            // Прогресс-бар для книги
+            const progressDiv = document.createElement('div');
+            progressDiv.classList.add('progress-container');
+            const progressBar = document.createElement('div');
+            progressBar.classList.add('progress-bar');
+            progressDiv.appendChild(progressBar);
+            bookDiv.appendChild(progressDiv);
             
             const chunks = Math.ceil(book.pages / book.chunk);
             for (let i = 0; i < chunks; i++) {
@@ -328,9 +428,13 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = book.progress[i] || false;
                 checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        createParticles(checkpoint);
+                    }
                     books[bookIndex].progress[i] = checkbox.checked;
                     saveBooks();
                     updateProfile();
+                    updateBookProgress(bookIndex);
                 });
                 
                 const label = document.createElement('label');
@@ -346,6 +450,9 @@
             // Switch views
             document.getElementById('mainView').classList.add('hidden');
             document.getElementById('detailView').classList.remove('hidden');
+
+            // Инициализация прогресса
+            updateBookProgress(bookIndex);
 
             // Scroll to the first unchecked checkpoint
             let targetCheckpoint = bookDiv.querySelector('.checkpoint:first-child');
