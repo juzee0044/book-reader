@@ -40,8 +40,10 @@
             --progress-bar: #4CAF50;
             --gradient-start: #e0f7fa;
             --gradient-end: #ffffff;
+            --error-color: #f44336;
+            --success-color: #4CAF50;
+            --accent-color: #66bb6a;
         }
-
         .dark-theme {
             --bg-color: #1e1e1e;
             --text-color: #e0e0e0;
@@ -76,18 +78,24 @@
             --progress-bar: #66bb6a;
             --gradient-start: #121212;
             --gradient-end: #1e1e1e;
+            --error-color: #ef5350;
+            --success-color: #66bb6a;
+            --accent-color: #4fc3f7;
         }
-
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
             background: linear-gradient(to bottom, var(--gradient-start), var(--gradient-end));
             color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         h1 {
             text-align: center;
             color: var(--header-color);
+            margin-bottom: 20px;
         }
         form {
             background: var(--form-bg);
@@ -106,6 +114,11 @@
             box-sizing: border-box;
             background-color: var(--input-bg);
             color: var(--text-color);
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--button-bg);
+            outline: none;
         }
         button {
             width: 100%;
@@ -115,7 +128,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -123,6 +136,9 @@
         }
         button:hover {
             background-color: var(--button-hover);
+        }
+        button:active {
+            transform: scale(0.98);
         }
         .book-detail {
             background: var(--book-bg);
@@ -135,55 +151,46 @@
         .book-detail h2 {
             margin: 0 0 10px;
             color: var(--book-header);
-        }
-        .checkpoint {
             display: flex;
             align-items: center;
-            margin: 5px 0;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-            padding: 5px;
-            border-radius: 4px;
+            gap: 10px;
+        }
+        .progress-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
             position: relative;
         }
-        .checkpoint:hover {
-            background-color: var(--checkpoint-hover);
+        .progress-input input {
+            flex: 1;
         }
-        .checkpoint input {
-            margin-right: 10px;
-            cursor: pointer;
+        .progress-input button {
+            width: auto;
+            padding: 10px 20px;
         }
-        .checkpoint label {
-            transition: color 0.3s ease;
-            color: var(--text-color);
-        }
-        .checkpoint input:checked + label {
-            color: var(--button-bg);
-            font-weight: bold;
-        }
-        .checkpoint:active {
-            transform: scale(1.05);
-            background-color: var(--checkpoint-active);
-        }
-        /* Анимация частиц при чек */
+        /* Анимация частиц при обновлении */
         .particles {
             position: absolute;
             top: 50%;
-            left: 20px;
+            left: 50%;
             width: 20px;
             height: 20px;
             pointer-events: none;
+            z-index: 10;
+            transform: translate(-50%, -50%);
         }
         .particle {
             position: absolute;
-            width: 4px;
-            height: 4px;
+            width: 6px;
+            height: 6px;
             background-color: var(--particle-color);
             border-radius: 50%;
-            animation: particle-burst 0.5s ease-out forwards;
+            animation: particle-burst 0.6s ease-out forwards;
         }
         @keyframes particle-burst {
-            0% { transform: translate(0, 0); opacity: 1; }
-            100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
         }
         #bookMenu {
             background: var(--menu-bg);
@@ -192,6 +199,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin-top: 20px;
             border: 1px solid var(--menu-border);
+            flex: 1;
         }
         #bookMenu h3 {
             margin: 0 0 10px;
@@ -206,23 +214,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 5px 0;
+            margin: 10px 0;
             background-color: var(--list-bg);
             border-radius: 4px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            padding: 10px;
         }
         #bookMenu li:hover {
             background-color: var(--list-hover);
+            transform: translateY(-2px);
         }
         #bookMenu a {
             text-decoration: none;
             color: var(--text-color);
             flex: 1;
-            padding: 8px;
-            text-align: left;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+        }
+        .book-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .book-progress {
+            font-size: 0.8em;
+            color: var(--profile-text);
+            white-space: nowrap;
+            margin-left: 0;
         }
         .delete-btn {
             background: none;
@@ -230,9 +249,12 @@
             color: var(--delete-color);
             cursor: pointer;
             font-size: 16px;
-            flex: 1;
-            padding: 8px;
-            text-align: right;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: color 0.2s ease;
         }
         .delete-btn:hover {
@@ -247,7 +269,7 @@
             border-radius: 4px;
             cursor: pointer;
             margin-top: 10px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -255,6 +277,9 @@
         }
         #clearAllBtn:hover {
             background-color: var(--clear-hover);
+        }
+        #clearAllBtn:active {
+            transform: scale(0.98);
         }
         #backBtn {
             width: 100%;
@@ -265,7 +290,7 @@
             border-radius: 4px;
             cursor: pointer;
             margin-bottom: 20px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -274,6 +299,9 @@
         #backBtn:hover {
             background-color: var(--back-hover);
         }
+        #backBtn:active {
+            transform: scale(0.98);
+        }
         #profile {
             background: var(--profile-bg);
             padding: 15px;
@@ -281,6 +309,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             border: 1px solid var(--profile-border);
+            position: relative;
         }
         #profile h3 {
             margin: 0 0 10px;
@@ -292,12 +321,13 @@
             color: var(--profile-text);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            font-size: 1em;
         }
         .progress-container {
             background-color: var(--progress-bg);
             border-radius: 4px;
-            height: 10px;
+            height: 12px;
             margin: 10px 0;
             overflow: hidden;
         }
@@ -312,32 +342,78 @@
         }
         #themeToggle {
             width: auto;
-            padding: 5px 10px;
-            margin-bottom: 10px;
+            padding: 8px 12px;
+            margin: 0 auto 20px;
             background-color: var(--button-bg);
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            display: block;
         }
         #themeToggle:hover {
             background-color: var(--button-hover);
+        }
+        #themeToggle:active {
+            transform: scale(0.98);
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .error {
+            background-color: var(--error-color);
+            color: white;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--progress-bg);
+            border-radius: 4px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
         }
         @media (max-width: 600px) {
             body {
                 padding: 10px;
             }
             form, .book-detail, #bookMenu, #profile {
-                padding: 15px;
+                padding: 12px;
             }
+            h1 {
+                font-size: 1.5em;
+            }
+            button {
+                font-size: 0.9em;
+            }
+            .progress-input {
+                flex-direction: column;
+            }
+            .progress-input button {
+                width: 100%;
+            }
+        }
+        /* Accessibility improvements */
+        [role="button"] {
+            cursor: pointer;
+        }
+        input[type="number"]:focus {
+            outline: 2px solid var(--accent-color);
         }
     </style>
 </head>
 <body>
     <h1>Геймификация Чтения Книг</h1>
     <button id="themeToggle"><i class="fas fa-moon"></i> Переключить тему</button>
-   
     <div id="mainView">
         <div id="profile">
             <h3>Профиль</h3>
@@ -350,27 +426,25 @@
             <p id="profilePages"></p>
             <p id="profileBooks"></p>
         </div>
-       
+  
         <form id="addBookForm">
             <label for="title">Название книги:</label>
-            <input type="text" id="title" required>
-           
+            <input type="text" id="title" required aria-required="true" aria-label="Название книги">
+      
             <label for="pages">Общее количество страниц:</label>
-            <input type="number" id="pages" min="1" required>
-           
-            <label for="chunk">Размер chunk (n страниц на чекпоинт):</label>
-            <input type="number" id="chunk" min="1" required>
-           
+            <input type="number" id="pages" min="1" required aria-required="true" aria-label="Общее количество страниц">
+      
             <button type="submit"><i class="fas fa-plus"></i> Добавить книгу</button>
+            <div id="formMessage" class="message hidden"></div>
         </form>
-       
+  
         <div id="bookMenu">
             <h3>Список книг</h3>
+            <input type="text" id="searchInput" placeholder="Поиск по названию..." aria-label="Поиск книг">
             <ul id="bookListMenu"></ul>
             <button id="clearAllBtn"><i class="fas fa-trash-alt"></i> Очистить все книги</button>
         </div>
     </div>
-   
     <div id="detailView" class="hidden">
         <button id="backBtn"><i class="fas fa-arrow-left"></i> Вернуться назад</button>
         <div id="bookDetail"></div>
@@ -386,183 +460,172 @@
             let readPages = 0;
             let completedBooks = 0;
             books.forEach(book => {
-                let bookPagesRead = 0;
-                const chunks = Math.ceil(book.pages / book.chunk);
-                for (let i = 0; i < chunks; i++) {
-                    if (book.progress[i]) {
-                        const pagesInChunk = Math.min(book.chunk, book.pages - i * book.chunk);
-                        bookPagesRead += pagesInChunk;
-                    }
-                }
+                const bookPagesRead = Math.min(book.current || 0, book.pages);
                 readPages += bookPagesRead;
-                if (bookPagesRead === book.pages) completedBooks++;
+                if (bookPagesRead >= book.pages) completedBooks++;
             });
-            const exp = readPages; // Система заработка: опыт равен количеству прочитанных страниц
-            const level = 1 + Math.floor(exp / 100); // Уровень повышается каждые 100 страниц
+            const exp = readPages; // Опыт равен количеству прочитанных страниц
+            const level = 1 + Math.floor(exp / 100); // Уровень каждые 100 страниц
             const rankIndex = Math.min(Math.floor((level - 1) / 5), ranks.length - 1);
             const rank = ranks[rankIndex];
             const progressPercent = (exp % 100) / 100 * 100;
-            // Отображаем в профиле с иконками
+            // Отображаем в профиле
             document.getElementById('profileLevel').innerHTML = `<i class="fas fa-star"></i> Уровень: ${level}`;
             document.getElementById('profileRank').innerHTML = `<i class="fas fa-trophy"></i> Ранг: ${rank}`;
             document.getElementById('profileExp').innerHTML = `<i class="fas fa-chart-line"></i> Опыт: ${exp} / ${level * 100}`;
             document.getElementById('profilePages').innerHTML = `<i class="fas fa-file-alt"></i> Прочитано страниц: ${readPages}`;
             document.getElementById('profileBooks').innerHTML = `<i class="fas fa-book-open"></i> Завершенных книг: ${completedBooks}`;
-            // Анимация прогресс-бара
+            // Прогресс-бар
             const expProgress = document.getElementById('expProgress');
             expProgress.style.width = `${progressPercent}%`;
         }
-        function renderBookList() {
+        function renderBookList(filter = '') {
             const bookListMenu = document.getElementById('bookListMenu');
             bookListMenu.innerHTML = '';
-            books.forEach((book, bookIndex) => {
+            const filteredBooks = books.filter(book => book.title.toLowerCase().includes(filter.toLowerCase()));
+            filteredBooks.forEach((book, bookIndex) => {
                 const li = document.createElement('li');
-               
                 const a = document.createElement('a');
                 a.href = '#';
-                a.innerHTML = `<i class="fas fa-book"></i> ${book.title}`;
+                a.innerHTML = `<i class="fas fa-book"></i><span class="book-title">${book.title}</span>`;
+                const progressPercent = Math.round(((book.current || 0) / book.pages) * 100);
+                const progressSpan = document.createElement('span');
+                progressSpan.classList.add('book-progress');
+                progressSpan.textContent = `${progressPercent}%`;
+                a.appendChild(progressSpan);
+                a.setAttribute('aria-label', `Открыть книгу ${book.title}`);
                 a.addEventListener('click', (e) => {
                     e.preventDefault();
                     showBookDetail(bookIndex);
                 });
                 li.appendChild(a);
-               
                 const deleteBtn = document.createElement('button');
                 deleteBtn.classList.add('delete-btn');
                 deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.setAttribute('aria-label', `Удалить книгу ${book.title}`);
                 deleteBtn.addEventListener('click', () => {
                     if (confirm(`Вы уверены, что хотите удалить книгу "${book.title}"?`)) {
                         books.splice(bookIndex, 1);
                         saveBooks();
-                        renderBookList();
+                        renderBookList(filter);
                         updateProfile();
                     }
                 });
                 li.appendChild(deleteBtn);
-               
                 bookListMenu.appendChild(li);
             });
             updateProfile();
         }
         function updateBookProgress(bookIndex) {
             const book = books[bookIndex];
-            let bookPagesRead = 0;
-            const chunks = Math.ceil(book.pages / book.chunk);
-            for (let i = 0; i < chunks; i++) {
-                if (book.progress[i]) {
-                    bookPagesRead += Math.min(book.chunk, book.pages - i * book.chunk);
-                }
-            }
+            const bookPagesRead = Math.min(book.current || 0, book.pages);
             const progressPercent = (bookPagesRead / book.pages) * 100;
             const progressBar = document.querySelector('.book-detail .progress-bar');
             if (progressBar) {
                 progressBar.style.width = `${progressPercent}%`;
             }
+            // Если завершена
+            const title = document.querySelector('.book-detail h2');
+            title.innerHTML = (bookPagesRead >= book.pages)
+                ? `<i class="fas fa-check-circle" style="color: var(--success-color);"></i> ${book.title} (${book.pages} страниц)`
+                : `${book.title} (${book.pages} страниц)`;
         }
-        function createParticles(checkpoint) {
+        function createParticles(container) {
             const particlesDiv = document.createElement('div');
             particlesDiv.classList.add('particles');
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 15; i++) {
                 const particle = document.createElement('div');
                 particle.classList.add('particle');
-                particle.style.setProperty('--dx', `${Math.random() * 20 - 10}px`);
-                particle.style.setProperty('--dy', `${Math.random() * 20 - 10}px`);
+                particle.style.setProperty('--dx', `${Math.random() * 40 - 20}px`);
+                particle.style.setProperty('--dy', `${Math.random() * 40 - 20}px`);
                 particlesDiv.appendChild(particle);
             }
-            checkpoint.appendChild(particlesDiv);
-            setTimeout(() => particlesDiv.remove(), 500);
+            container.appendChild(particlesDiv);
+            setTimeout(() => particlesDiv.remove(), 600);
         }
         function showBookDetail(bookIndex) {
             currentBookIndex = bookIndex;
             const book = books[bookIndex];
             const bookDetail = document.getElementById('bookDetail');
             bookDetail.innerHTML = '';
-           
             const bookDiv = document.createElement('div');
             bookDiv.classList.add('book-detail');
-           
             const title = document.createElement('h2');
             title.textContent = `${book.title} (${book.pages} страниц)`;
             bookDiv.appendChild(title);
-            // Прогресс-бар для книги
+            // Прогресс-бар
             const progressDiv = document.createElement('div');
             progressDiv.classList.add('progress-container');
             const progressBar = document.createElement('div');
             progressBar.classList.add('progress-bar');
             progressDiv.appendChild(progressBar);
             bookDiv.appendChild(progressDiv);
-           
-            const chunks = Math.ceil(book.pages / book.chunk);
-            for (let i = 0; i < chunks; i++) {
-                const start = i * book.chunk + 1;
-                const end = Math.min((i + 1) * book.chunk, book.pages);
-                const checkpoint = document.createElement('div');
-                checkpoint.classList.add('checkpoint');
-               
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = book.progress[i] || false;
-                checkbox.addEventListener('change', () => {
-                    if (checkbox.checked) {
-                        createParticles(checkpoint);
-                    }
-                    books[bookIndex].progress[i] = checkbox.checked;
-                    saveBooks();
-                    updateProfile();
-                    updateBookProgress(bookIndex);
-                });
-               
-                const label = document.createElement('label');
-                label.textContent = `Прочитано страницы ${start}-${end}`;
-               
-                checkpoint.appendChild(checkbox);
-                checkpoint.appendChild(label);
-                bookDiv.appendChild(checkpoint);
-            }
-           
+            // Ввод прогресса
+            const inputDiv = document.createElement('div');
+            inputDiv.classList.add('progress-input');
+            const label = document.createElement('label');
+            label.textContent = 'Прочитано страниц:';
+            label.setAttribute('for', 'currentPage');
+            inputDiv.appendChild(label);
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = 'currentPage';
+            input.min = 0;
+            input.max = book.pages;
+            input.value = book.current || 0;
+            inputDiv.appendChild(input);
+            const updateBtn = document.createElement('button');
+            updateBtn.innerHTML = '<i class="fas fa-save"></i> Обновить';
+            updateBtn.addEventListener('click', () => {
+                let newCurrent = parseInt(input.value);
+                if (isNaN(newCurrent) || newCurrent < 0) newCurrent = 0;
+                if (newCurrent > book.pages) newCurrent = book.pages;
+                if (newCurrent > (book.current || 0)) {
+                    createParticles(inputDiv);
+                }
+                books[bookIndex].current = newCurrent;
+                saveBooks();
+                updateProfile();
+                updateBookProgress(bookIndex);
+            });
+            inputDiv.appendChild(updateBtn);
+            bookDiv.appendChild(inputDiv);
             bookDetail.appendChild(bookDiv);
-            // Switch views
+            // Переключение views
             document.getElementById('mainView').classList.add('hidden');
             document.getElementById('detailView').classList.remove('hidden');
-            // Инициализация прогресса
             updateBookProgress(bookIndex);
-            // Scroll to the first unchecked checkpoint
-            let targetCheckpoint = bookDiv.querySelector('.checkpoint:first-child');
-            const checkpoints = bookDiv.querySelectorAll('.checkpoint');
-            for (let cp of checkpoints) {
-                const cb = cp.querySelector('input');
-                if (!cb.checked) {
-                    targetCheckpoint = cp;
-                    break;
-                }
-            }
-            targetCheckpoint.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         function showMainView() {
             document.getElementById('detailView').classList.add('hidden');
             document.getElementById('mainView').classList.remove('hidden');
             currentBookIndex = -1;
-            renderBookList(); // Update profile on return
+            renderBookList(document.getElementById('searchInput').value);
         }
         document.getElementById('addBookForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const title = document.getElementById('title').value;
+            const title = document.getElementById('title').value.trim();
             const pages = parseInt(document.getElementById('pages').value);
-            const chunk = parseInt(document.getElementById('chunk').value);
-           
+            const formMessage = document.getElementById('formMessage');
+            if (!title || isNaN(pages) || pages < 1) {
+                formMessage.classList.remove('hidden', 'success');
+                formMessage.classList.add('error');
+                formMessage.textContent = 'Пожалуйста, заполните все поля корректно.';
+                return;
+            }
             books.push({
                 title,
                 pages,
-                chunk,
-                progress: new Array(Math.ceil(pages / chunk)).fill(false)
+                current: 0
             });
-           
             saveBooks();
             renderBookList();
-           
             document.getElementById('title').value = '';
             document.getElementById('pages').value = '';
-            document.getElementById('chunk').value = '';
+            formMessage.classList.remove('hidden', 'error');
+            formMessage.classList.add('success');
+            formMessage.textContent = 'Книга успешно добавлена!';
+            setTimeout(() => formMessage.classList.add('hidden'), 3000);
         });
         document.getElementById('clearAllBtn').addEventListener('click', () => {
             if (confirm('Вы уверены, что хотите очистить все книги? Это действие нельзя отменить.')) {
@@ -574,7 +637,11 @@
         document.getElementById('backBtn').addEventListener('click', () => {
             showMainView();
         });
-        // Theme toggle logic
+        // Поиск
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderBookList(e.target.value);
+        });
+        // Тема
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
         const savedTheme = localStorage.getItem('theme') || 'light';
